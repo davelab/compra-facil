@@ -1,19 +1,18 @@
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google"
+import { IBM_Plex_Mono, Playfair_Display } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils";
 
-const playfairDisplay = Playfair_Display({subsets:['latin'],variable:'--font-serif'});
-
-const fontSans = Geist({
+const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
 })
 
-const fontMono = Geist_Mono({
+const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-serif",
 })
 
 export default function RootLayout({
@@ -23,9 +22,9 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       suppressHydrationWarning
-      className={cn("antialiased", fontSans.variable, fontMono.variable, "font-serif", playfairDisplay.variable)}
+      className={cn("antialiased", ibmPlexMono.variable, "font-serif", playfairDisplay.variable)}
     >
       <body>
         <ThemeProvider>{children}</ThemeProvider>

@@ -1,19 +1,30 @@
-import { Button } from "@/components/ui/button"
+import { readFileSync } from "fs"
+import path from "path"
+import { parseCsv } from "@/lib/parse-csv"
+import { SummaryCards } from "@/components/summary-cards"
+import { PriceComparison } from "@/components/price-comparison"
 
 export default function Page() {
+  const csvPath = path.join(process.cwd(), "public", "data.csv")
+  const csvText = readFileSync(csvPath, "utf-8")
+  const analysis = parseCsv(csvText)
+
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
+    <main className="mx-auto max-w-7xl px-4 py-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight">🛒 Cesta Óptima</h1>
+        <p className="mt-1 text-muted-foreground">
+          Comparativa de precios de supermercados — encuentra la mejor cesta de la compra
+        </p>
+      </header>
+
+      <section className="mb-10">
+        <SummaryCards analysis={analysis} />
+      </section>
+
+      <section>
+        <PriceComparison analysis={analysis} />
+      </section>
+    </main>
   )
 }

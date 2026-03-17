@@ -1,15 +1,13 @@
-import { readFileSync } from "fs"
-import path from "path"
-import { parseCsv } from "@/lib/parse-csv"
+import { getLatestSnapshot } from "@/lib/db/queries"
+import { buildAnalysis } from "@/lib/analysis"
 import { SummaryCards } from "@/components/summary-cards"
 import { CategoryRanking } from "@/components/category-ranking"
 import { AppShell } from "@/components/app-shell"
 import { ThemeToggle } from "@/components/theme-toggle"
 
-export default function Page() {
-  const csvPath = path.join(process.cwd(), "public", "data.csv")
-  const csvText = readFileSync(csvPath, "utf-8")
-  const analysis = parseCsv(csvText)
+export default async function Page() {
+  const rows = await getLatestSnapshot()
+  const analysis = buildAnalysis(rows)
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">

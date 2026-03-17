@@ -43,7 +43,7 @@ export function RouteOptimizer({
 }: RouteOptimizerProps) {
   const { productStats, supermarkets, optimalTotal, cheapestWins } = analysis
 
-  const [modeId, setModeId] = useState<ModeId>("car")
+  const [modeId, setModeId] = useState<ModeId>("walk")
 
   function handleModeChange(id: ModeId) {
     const mode = MODES.find((m) => m.id === id)!

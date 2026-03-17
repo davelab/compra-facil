@@ -11,7 +11,7 @@ interface AppShellProps {
 }
 
 export function AppShell({ analysis, categoryRanking }: AppShellProps) {
-  const [costPerVisit, setCostPerVisit] = useState(1.80)
+  const [costPerVisit, setCostPerVisit] = useState(0)
 
   return (
     <>

@@ -4,33 +4,52 @@ import { Separator } from "@/components/ui/separator"
 
 import type { Analysis } from "@/lib/parse-csv"
 
-const fmt = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
+const fmt = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+})
 
 interface SummaryCardsProps {
   analysis: Analysis
 }
 
 export function SummaryCards({ analysis }: SummaryCardsProps) {
-  const { rankedStats, optimalTotal, totalItems, mostCheapest, supermarkets, cheapestWins, mostExpensive, maxExpensive, priciest } =
-    analysis
+  const {
+    rankedStats,
+    optimalTotal,
+    totalItems,
+    mostCheapest,
+    supermarkets,
+    cheapestWins,
+    mostExpensive,
+    maxExpensive,
+    priciest,
+  } = analysis
 
-  const supermarketsUsed = supermarkets.filter((sm) => (cheapestWins[sm] ?? 0) > 0).length
+  const supermarketsUsed = supermarkets.filter(
+    (sm) => (cheapestWins[sm] ?? 0) > 0
+  ).length
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Cesta Óptima */}
+      {/* Compra Facil */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <span>🎯</span>
-            <span>Cesta Óptima</span>
+            <span>Compra Facil</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold text-primary">{fmt.format(optimalTotal)}</p>
+          <p className="text-3xl font-bold text-primary">
+            {fmt.format(optimalTotal)}
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Comprando cada producto en el supermercado más barato — {totalItems} productos en{" "}
-            <span className="font-medium text-foreground">{supermarketsUsed} de {supermarkets.length}</span>{" "}
+            Comprando cada producto en el supermercado más barato — {totalItems}{" "}
+            productos en{" "}
+            <span className="font-medium text-foreground">
+              {supermarketsUsed} de {supermarkets.length}
+            </span>{" "}
             supermercados
           </p>
         </CardContent>
@@ -55,11 +74,14 @@ export function SummaryCards({ analysis }: SummaryCardsProps) {
                   </Badge>
                 ))}
             </div>
-            <p className="mb-2 text-xs text-muted-foreground">Productos más baratos por supermercado:</p>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Productos más baratos por supermercado:
+            </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
               {supermarkets.map((sm) => (
                 <span key={sm} className="text-muted-foreground">
-                  <span className="font-medium text-foreground">{sm}</span>: {cheapestWins[sm] ?? 0}
+                  <span className="font-medium text-foreground">{sm}</span>:{" "}
+                  {cheapestWins[sm] ?? 0}
                 </span>
               ))}
             </div>
@@ -84,14 +106,17 @@ export function SummaryCards({ analysis }: SummaryCardsProps) {
                   </Badge>
                 ))}
             </div>
-            <p className="mb-2 text-xs text-muted-foreground">Productos más caros por supermercado:</p>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Productos más caros por supermercado:
+            </p>
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
               {supermarkets.map((sm) => (
                 <span key={sm} className="text-muted-foreground">
-                  <span className="font-medium text-foreground">{sm}</span>: {priciest[sm] ?? 0}
+                  <span className="font-medium text-foreground">{sm}</span>:{" "}
+                  {priciest[sm] ?? 0}
                 </span>
-            ))}
-          </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -106,7 +131,9 @@ export function SummaryCards({ analysis }: SummaryCardsProps) {
               <CardTitle className="text-base">{stat.sm}</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <p className="text-2xl font-bold">{fmt.format(stat.fullBasketTotal)}</p>
+              <p className="text-2xl font-bold">
+                {fmt.format(stat.fullBasketTotal)}
+              </p>
               {stat.missing === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   ✓ Todos los {totalItems} productos
@@ -117,7 +144,8 @@ export function SummaryCards({ analysis }: SummaryCardsProps) {
                 </p>
               )}
               <p className="text-xs text-red-600 dark:text-red-400">
-                + {fmt.format(stat.extraVsOptimal)} vs óptimo (+{stat.extraPct.toFixed(1)}%)
+                + {fmt.format(stat.extraVsOptimal)} vs óptimo (+
+                {stat.extraPct.toFixed(1)}%)
               </p>
             </CardContent>
           </Card>

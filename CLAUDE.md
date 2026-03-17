@@ -16,7 +16,7 @@ There are no tests. TypeScript and ESLint are the primary correctness gates.
 
 ## Architecture
 
-The app is a supermarket price comparison tool called **Cesta Óptima**. It reads a static CSV (`public/data.csv`) and lets users build a filtered shopping list.
+The app is a supermarket price comparison tool called **Compra Facil**. It reads a static CSV (`public/data.csv`) and lets users build a filtered shopping list.
 
 ### Data flow
 
@@ -33,6 +33,7 @@ public/data.csv
 ### lib/parse-csv.ts
 
 Single file containing all types and analysis logic:
+
 - `parsePrice` — strips `€`, normalises comma decimals, returns `null` for `/`/`-`/empty
 - `parseCsv` — uses PapaParse, builds `ProductStat[]`, then derives `SmStat[]` per supermarket
 - **`fullBasketTotal`** on each `SmStat` = own prices + cheapest-available price for missing items (makes totals comparable across stores with different stock coverage)
@@ -41,6 +42,7 @@ Single file containing all types and analysis logic:
 ### components/price-comparison.tsx
 
 Single large client component holding all interactive state:
+
 - `selectedItems: Set<string>` — product names checked for the shopping list
 - `selectedSupermarkets: Set<string>` — filter pills controlling which stores are considered when recommending where to buy
 - Shopping list re-derives cheapest store on every render from current `selectedSupermarkets`; items unavailable in all selected stores render a greyed fallback row

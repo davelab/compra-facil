@@ -10,7 +10,13 @@ import {
   type ColumnFiltersState,
   type VisibilityState,
 } from "@tanstack/react-table"
-import { MagnifyingGlass, Faders, DownloadSimple, LinkSimple, CaretRight } from "@phosphor-icons/react"
+import {
+  MagnifyingGlass,
+  Faders,
+  DownloadSimple,
+  LinkSimple,
+  CaretRight,
+} from "@phosphor-icons/react"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,7 +42,10 @@ import {
 } from "@/components/ui/table"
 import type { Analysis, ProductStat } from "@/lib/parse-csv"
 
-const fmt = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
+const fmt = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+})
 
 interface PriceComparisonProps {
   analysis: Analysis
@@ -44,8 +53,13 @@ interface PriceComparisonProps {
   routeOptimizerSlot?: ReactNode
 }
 
-export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot }: PriceComparisonProps) {
-  const { supermarkets, categories, productStats, optimalTotal, rankedStats } = analysis
+export function PriceComparison({
+  analysis,
+  costPerVisit = 0,
+  routeOptimizerSlot,
+}: PriceComparisonProps) {
+  const { supermarkets, categories, productStats, optimalTotal, rankedStats } =
+    analysis
 
   // Row selection (shopping list)
   const [checkedProducts, setCheckedProducts] = useState<Set<string>>(new Set())
@@ -60,7 +74,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
   // Category filter (null = all)
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   // Collapsed category groups
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(
+    new Set()
+  )
   // Savings threshold value and mode
   const [threshold, setThreshold] = useState(0)
   const [thresholdMode, setThresholdMode] = useState<"eur" | "pct">("eur")
@@ -71,23 +87,30 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
 
   // Data filtered by active category (before TanStack name filter)
   const filteredData = useMemo(
-    () => activeCategory ? productStats.filter((p) => p.category === activeCategory) : productStats,
+    () =>
+      activeCategory
+        ? productStats.filter((p) => p.category === activeCategory)
+        : productStats,
     [productStats, activeCategory]
   )
 
-  const allChecked = filteredData.length > 0 && filteredData.every((p) => checkedProducts.has(p.name))
-  const someChecked = filteredData.some((p) => checkedProducts.has(p.name)) && !allChecked
+  const allChecked =
+    filteredData.length > 0 &&
+    filteredData.every((p) => checkedProducts.has(p.name))
+  const someChecked =
+    filteredData.some((p) => checkedProducts.has(p.name)) && !allChecked
 
   // Restore selection from URL on mount (share link)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const lista = params.get("lista")
     if (!lista) return
-    const names = lista.split(",").map(decodeURIComponent).filter((n) =>
-      productStats.some((p) => p.name === n)
-    )
+    const names = lista
+      .split(",")
+      .map(decodeURIComponent)
+      .filter((n) => productStats.some((p) => p.name === n))
     if (names.length > 0) setCheckedProducts(new Set(names))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function toggleAllProducts() {
@@ -142,74 +165,90 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
   }
 
   // Build columns dynamically from supermarkets
-  const columns = useMemo<ColumnDef<ProductStat>[]>(() => [
-    {
-      id: "select",
-      enableHiding: false,
-      header: () => (
-        <Checkbox
-          checked={allChecked}
-          data-indeterminate={someChecked ? true : undefined}
-          onCheckedChange={toggleAllProducts}
-          aria-label="Seleccionar todos"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={checkedProducts.has(row.original.name)}
-          onCheckedChange={() => toggleProduct(row.original.name)}
-          aria-label={`Seleccionar ${row.original.name}`}
-        />
-      ),
-      size: 24,
-    },
-    {
-      accessorKey: "name",
-      id: "name",
-      enableHiding: false,
-      header: "Producto",
-      filterFn: "includesString",
-      cell: ({ getValue }) => (
-        <span className="font-medium">{getValue<string>()}</span>
-      ),
-    },
-    {
-      accessorKey: "unit",
-      id: "unit",
-      header: () => <div className="w-[30px] max-w-[30px] overflow-hidden text-ellipsis">Ud.</div>,
-      cell: ({ getValue }) => (
-        <div className="w-[30px] max-w-[30px] overflow-hidden text-ellipsis text-muted-foreground">
-          {getValue<string>()}
-        </div>
-      ),
-    },
-    ...supermarkets.map<ColumnDef<ProductStat>>((sm) => ({
-      id: sm,
-      header: sm,
-      accessorFn: (row) => row.prices[sm],
-      cell: ({ row }) => {
-        const price = row.original.prices[sm]
-        const isCheapest = price !== null && price === row.original.min
-        const isMostExp = price !== null && price === row.original.max && row.original.min !== row.original.max
-        return (
-          <span
-            className={[
-              "tabular-nums block w-full rounded px-1 py-0.5",
-              isCheapest ? "bg-green-100 font-semibold text-green-800 dark:bg-green-900/60 dark:text-green-300" : "",
-              isMostExp ? "bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300" : "",
-            ].filter(Boolean).join(" ")}
-          >
-            {price === null ? (
-              <span className="text-muted-foreground">—</span>
-            ) : (
-              fmt.format(price)
-            )}
-          </span>
-        )
+  const columns = useMemo<ColumnDef<ProductStat>[]>(
+    () => [
+      {
+        id: "select",
+        enableHiding: false,
+        header: () => (
+          <Checkbox
+            checked={allChecked}
+            data-indeterminate={someChecked ? true : undefined}
+            onCheckedChange={toggleAllProducts}
+            aria-label="Seleccionar todos"
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            checked={checkedProducts.has(row.original.name)}
+            onCheckedChange={() => toggleProduct(row.original.name)}
+            aria-label={`Seleccionar ${row.original.name}`}
+          />
+        ),
+        size: 24,
       },
-    })),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [supermarkets, checkedProducts, allChecked, someChecked])
+      {
+        accessorKey: "name",
+        id: "name",
+        enableHiding: false,
+        header: "Producto",
+        filterFn: "includesString",
+        cell: ({ getValue }) => (
+          <span className="font-medium">{getValue<string>()}</span>
+        ),
+      },
+      {
+        accessorKey: "unit",
+        id: "unit",
+        header: () => (
+          <div className="w-[30px] max-w-[30px] overflow-hidden text-ellipsis">
+            Ud.
+          </div>
+        ),
+        cell: ({ getValue }) => (
+          <div className="w-[30px] max-w-[30px] overflow-hidden text-ellipsis text-muted-foreground">
+            {getValue<string>()}
+          </div>
+        ),
+      },
+      ...supermarkets.map<ColumnDef<ProductStat>>((sm) => ({
+        id: sm,
+        header: sm,
+        accessorFn: (row) => row.prices[sm],
+        cell: ({ row }) => {
+          const price = row.original.prices[sm]
+          const isCheapest = price !== null && price === row.original.min
+          const isMostExp =
+            price !== null &&
+            price === row.original.max &&
+            row.original.min !== row.original.max
+          return (
+            <span
+              className={[
+                "block w-full rounded px-1 py-0.5 tabular-nums",
+                isCheapest
+                  ? "bg-green-100 font-semibold text-green-800 dark:bg-green-900/60 dark:text-green-300"
+                  : "",
+                isMostExp
+                  ? "bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300"
+                  : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {price === null ? (
+                <span className="text-muted-foreground">—</span>
+              ) : (
+                fmt.format(price)
+              )}
+            </span>
+          )
+        },
+      })),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ],
+    [supermarkets, checkedProducts, allChecked, someChecked]
+  )
 
   const table = useReactTable({
     data: filteredData,
@@ -243,7 +282,7 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
     const n = activeSmsArr.length
     let bestTotal = Infinity
     let bestStores: string[] = []
-    for (let mask = 1; mask < (1 << n); mask++) {
+    for (let mask = 1; mask < 1 << n; mask++) {
       const stores = activeSmsArr.filter((_, i) => (mask >> i) & 1)
       let basket = 0
       for (const p of selected) {
@@ -253,7 +292,10 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
         basket += prices.length > 0 ? Math.min(...prices) : p.min
       }
       const total = basket + stores.length * costPerVisit
-      if (total < bestTotal) { bestTotal = total; bestStores = stores }
+      if (total < bestTotal) {
+        bestTotal = total
+        bestStores = stores
+      }
     }
 
     return selected.map((p) => {
@@ -266,11 +308,19 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
           .map((sm) => ({ sm, price: p.prices[sm] }))
           .filter((e): e is { sm: string; price: number } => e.price !== null)
           .sort((a, b) => a.price - b.price)[0]
-        return fallback ? { product: p, sm: fallback.sm, price: fallback.price } : { product: p, sm: null, price: null }
+        return fallback
+          ? { product: p, sm: fallback.sm, price: fallback.price }
+          : { product: p, sm: null, price: null }
       }
       return { product: p, sm: entries[0].sm, price: entries[0].price }
     })
-  }, [checkedProducts, productStats, supermarkets, activeSupermarkets, costPerVisit])
+  }, [
+    checkedProducts,
+    productStats,
+    supermarkets,
+    activeSupermarkets,
+    costPerVisit,
+  ])
 
   const shoppingTotal = useMemo(
     () => shoppingList.reduce((sum, item) => sum + (item.price ?? 0), 0),
@@ -279,10 +329,16 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
 
   // Shopping list grouped by supermarket (in CSV order)
   const shoppingBySm = useMemo(() => {
-    const map: Record<string, Array<{ name: string; unit: string; price: number }>> = {}
+    const map: Record<
+      string,
+      Array<{ name: string; unit: string; price: number }>
+    > = {}
     const unavailable: string[] = []
     for (const { product, sm, price } of shoppingList) {
-      if (!sm || price === null) { unavailable.push(product.name); continue }
+      if (!sm || price === null) {
+        unavailable.push(product.name)
+        continue
+      }
       if (!map[sm]) map[sm] = []
       map[sm].push({ name: product.name, unit: product.unit, price })
     }
@@ -300,11 +356,20 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
     if (activeSmsArr.length === 0) return null
     return activeSmsArr
       .map((sm) => {
-        const basket = selected.reduce((sum, p) => sum + (p.prices[sm] ?? p.min), 0)
+        const basket = selected.reduce(
+          (sum, p) => sum + (p.prices[sm] ?? p.min),
+          0
+        )
         return { sm, total: basket + costPerVisit }
       })
       .sort((a, b) => a.total - b.total)[0]
-  }, [checkedProducts, productStats, supermarkets, activeSupermarkets, costPerVisit])
+  }, [
+    checkedProducts,
+    productStats,
+    supermarkets,
+    activeSupermarkets,
+    costPerVisit,
+  ])
 
   // Products sorted by price gap (max - min), largest saving first
   const topSavings = useMemo(
@@ -323,15 +388,24 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
 
   // Filter savings by active category
   const visibleSavings = useMemo(
-    () => activeCategory ? topSavings.filter((p) => p.category === activeCategory) : topSavings,
+    () =>
+      activeCategory
+        ? topSavings.filter((p) => p.category === activeCategory)
+        : topSavings,
     [topSavings, activeCategory]
   )
 
   function downloadShoppingList() {
-    const bySm: Record<string, Array<{ name: string; unit: string; price: number }>> = {}
+    const bySm: Record<
+      string,
+      Array<{ name: string; unit: string; price: number }>
+    > = {}
     const unavailable: string[] = []
     for (const { product, sm, price } of shoppingList) {
-      if (!sm || price === null) { unavailable.push(product.name); continue }
+      if (!sm || price === null) {
+        unavailable.push(product.name)
+        continue
+      }
       if (!bySm[sm]) bySm[sm] = []
       bySm[sm].push({ name: product.name, unit: product.unit, price })
     }
@@ -354,11 +428,18 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
     }
     if (costPerVisit > 0 && Object.keys(bySm).length > 0) {
       const storeCount = Object.keys(bySm).length
-      lines.push(`${"Viaje (" + storeCount + " tiendas)".padEnd(44)} ${fmt.format(storeCount * costPerVisit)}`)
+      lines.push(
+        `${"Viaje (" + storeCount + " tiendas)".padEnd(44)} ${fmt.format(storeCount * costPerVisit)}`
+      )
     }
-    const travelCost = costPerVisit > 0 ? Object.keys(bySm).length * costPerVisit : 0
-    lines.push(`${"TOTAL".padEnd(44)} ${fmt.format(shoppingTotal + travelCost)}`)
-    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" })
+    const travelCost =
+      costPerVisit > 0 ? Object.keys(bySm).length * costPerVisit : 0
+    lines.push(
+      `${"TOTAL".padEnd(44)} ${fmt.format(shoppingTotal + travelCost)}`
+    )
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/plain;charset=utf-8",
+    })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
@@ -380,7 +461,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
   }
 
   // Shared row renderer for both flat and grouped modes
-  function renderRow(row: ReturnType<typeof table.getRowModel>["rows"][number]) {
+  function renderRow(
+    row: ReturnType<typeof table.getRowModel>["rows"][number]
+  ) {
     return (
       <TableRow
         key={row.id}
@@ -388,19 +471,31 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
           "cursor-pointer",
           checkedProducts.has(row.original.name) ? "bg-primary/5" : "",
           isBelowThreshold(row.original) ? "opacity-20" : "",
-        ].filter(Boolean).join(" ")}
+        ]
+          .filter(Boolean)
+          .join(" ")}
         onClick={() => toggleProduct(row.original.name)}
       >
         {row.getVisibleCells().map((cell) => (
           <TableCell
             key={cell.id}
             className={
-              cell.column.id !== "select" && cell.column.id !== "name" && cell.column.id !== "unit"
+              cell.column.id !== "select" &&
+              cell.column.id !== "name" &&
+              cell.column.id !== "unit"
                 ? "text-right"
                 : ""
             }
-            style={cell.column.id === "select" ? { width: 24, paddingRight: 0 } : undefined}
-            onClick={cell.column.id === "select" ? (e) => e.stopPropagation() : undefined}
+            style={
+              cell.column.id === "select"
+                ? { width: 24, paddingRight: 0 }
+                : undefined
+            }
+            onClick={
+              cell.column.id === "select"
+                ? (e) => e.stopPropagation()
+                : undefined
+            }
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
@@ -415,10 +510,14 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
       {rankedStats.length > 0 && (
         <div className="rounded-xl bg-primary/10 px-4 py-3 text-sm">
           <span className="font-medium">Ahorro potencial: </span>
-          Cesta óptima{" "}
-          <span className="font-bold text-primary">{fmt.format(optimalTotal)}</span>{" "}
+          Compra Facil{" "}
+          <span className="font-bold text-primary">
+            {fmt.format(optimalTotal)}
+          </span>{" "}
           vs mejor supermercado único{" "}
-          <span className="font-bold">{fmt.format(rankedStats[0].fullBasketTotal)}</span>
+          <span className="font-bold">
+            {fmt.format(rankedStats[0].fullBasketTotal)}
+          </span>
           {" — "}ahorro de{" "}
           <span className="font-bold text-primary">
             {fmt.format(rankedStats[0].fullBasketTotal - optimalTotal)}
@@ -429,24 +528,38 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
 
       {/* Price Table */}
       <div>
-        <h2 className="mb-3 text-xl font-semibold">Comparativa de precios</h2>
+        <div className="mb-3 flex items-baseline gap-3">
+          <h2 className="text-xl font-semibold">Comparativa de precios</h2>
+          <span className="text-sm text-muted-foreground">
+            Haz clic en una fila para añadir productos a tu lista de la compra
+          </span>
+        </div>
 
         {/* Toolbar row 1: search + threshold + columns */}
-        <div className="mb-2 flex items-center gap-2 flex-wrap">
-          <div className="relative flex-1 max-w-xs">
-            <MagnifyingGlass className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          <div className="relative max-w-xs flex-1">
+            <MagnifyingGlass
+              className="absolute top-1/2 left-2.5 -translate-y-1/2 text-muted-foreground"
+              size={15}
+            />
             <Input
               placeholder="Filtrar productos…"
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(e) => table.getColumn("name")?.setFilterValue(e.target.value)}
+              value={
+                (table.getColumn("name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(e) =>
+                table.getColumn("name")?.setFilterValue(e.target.value)
+              }
               className="pl-8"
             />
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Umbral ahorro:</span>
+            <span className="text-sm whitespace-nowrap text-muted-foreground">
+              Umbral ahorro:
+            </span>
             <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+              <span className="absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted-foreground">
                 {thresholdMode === "eur" ? "€" : "%"}
               </span>
               <Input
@@ -455,7 +568,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
                 step={thresholdMode === "eur" ? 0.05 : 1}
                 value={threshold === 0 ? "" : threshold}
                 placeholder="0"
-                onChange={(e) => setThreshold(Math.max(0, parseFloat(e.target.value) || 0))}
+                onChange={(e) =>
+                  setThreshold(Math.max(0, parseFloat(e.target.value) || 0))
+                }
                 className="w-20 pl-6"
               />
             </div>
@@ -463,14 +578,20 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
               <Button
                 variant={thresholdMode === "eur" ? "default" : "outline"}
                 size="sm"
-                onClick={() => { setThresholdMode("eur"); setThreshold(0) }}
+                onClick={() => {
+                  setThresholdMode("eur")
+                  setThreshold(0)
+                }}
               >
                 €
               </Button>
               <Button
                 variant={thresholdMode === "pct" ? "default" : "outline"}
                 size="sm"
-                onClick={() => { setThresholdMode("pct"); setThreshold(0) }}
+                onClick={() => {
+                  setThresholdMode("pct")
+                  setThreshold(0)
+                }}
               >
                 %
               </Button>
@@ -519,7 +640,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+              onClick={() =>
+                setActiveCategory(activeCategory === cat ? null : cat)
+              }
               className={[
                 "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 activeCategory === cat
@@ -532,18 +655,26 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
           ))}
         </div>
 
-        {threshold > 0 && (() => {
-          const dimmedCount = table.getRowModel().rows.filter((r) => isBelowThreshold(r.original)).length
-          return dimmedCount > 0 ? (
-            <p className="mb-2 text-xs text-muted-foreground">
-              <span className="font-medium text-foreground">{dimmedCount}</span>{" "}
-              {dimmedCount === 1 ? "producto" : "productos"} con ahorro &lt;{" "}
-              {thresholdMode === "eur" ? fmt.format(threshold) : `${threshold}%`} aparecen atenuados.
-            </p>
-          ) : null
-        })()}
+        {threshold > 0 &&
+          (() => {
+            const dimmedCount = table
+              .getRowModel()
+              .rows.filter((r) => isBelowThreshold(r.original)).length
+            return dimmedCount > 0 ? (
+              <p className="mb-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {dimmedCount}
+                </span>{" "}
+                {dimmedCount === 1 ? "producto" : "productos"} con ahorro &lt;{" "}
+                {thresholdMode === "eur"
+                  ? fmt.format(threshold)
+                  : `${threshold}%`}{" "}
+                aparecen atenuados.
+              </p>
+            ) : null
+          })()}
 
-        <div className="rounded-xl ring-1 ring-foreground/10 overflow-auto max-h-[600px] [&_[data-slot=table-container]]:overflow-visible">
+        <div className="max-h-[600px] overflow-auto rounded-xl ring-1 ring-foreground/10 [&_[data-slot=table-container]]:overflow-visible">
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -554,12 +685,21 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
                       className={[
                         "sticky top-0 z-10 bg-muted",
                         header.id !== "name" ? "text-right" : "",
-                      ].filter(Boolean).join(" ")}
-                      style={header.id === "select" ? { width: 24, paddingRight: 0 } : undefined}
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      style={
+                        header.id === "select"
+                          ? { width: 24, paddingRight: 0 }
+                          : undefined
+                      }
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -568,7 +708,10 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
             <TableBody>
               {table.getRowModel().rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-20 text-center text-muted-foreground">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-20 text-center text-muted-foreground"
+                  >
                     Sin resultados.
                   </TableCell>
                 </TableRow>
@@ -578,13 +721,15 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
               ) : (
                 // Grouped rendering when showing all categories
                 categories.map((cat) => {
-                  const catRows = table.getRowModel().rows.filter((r) => r.original.category === cat)
+                  const catRows = table
+                    .getRowModel()
+                    .rows.filter((r) => r.original.category === cat)
                   if (catRows.length === 0) return null
                   const isCollapsed = collapsedCategories.has(cat)
                   return (
                     <Fragment key={cat}>
                       <TableRow
-                        className="bg-muted/60 cursor-pointer select-none hover:bg-muted/80"
+                        className="cursor-pointer bg-muted/60 select-none hover:bg-muted/80"
                         onClick={() => toggleCategoryCollapse(cat)}
                       >
                         <TableCell colSpan={columns.length} className="py-2">
@@ -594,7 +739,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
                               className={`transition-transform ${isCollapsed ? "" : "rotate-90"}`}
                             />
                             {cat}
-                            <span className="font-normal text-muted-foreground">({catRows.length})</span>
+                            <span className="font-normal text-muted-foreground">
+                              ({catRows.length})
+                            </span>
                           </span>
                         </TableCell>
                       </TableRow>
@@ -607,7 +754,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
             <TableFooter>
               <TableRow>
                 <TableCell />
-                <TableCell className="font-medium">Total cesta completa</TableCell>
+                <TableCell className="font-medium">
+                  Total cesta completa
+                </TableCell>
                 <TableCell />
                 {supermarkets
                   .filter((sm) => table.getColumn(sm)?.getIsVisible() !== false)
@@ -627,7 +776,8 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
 
         {table.getFilteredRowModel().rows.length < filteredData.length && (
           <p className="mt-2 text-xs text-muted-foreground">
-            Mostrando {table.getFilteredRowModel().rows.length} de {filteredData.length} productos
+            Mostrando {table.getFilteredRowModel().rows.length} de{" "}
+            {filteredData.length} productos
           </p>
         )}
       </div>
@@ -635,7 +785,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
       {/* Mayores ahorros potenciales */}
       {visibleSavings.length > 0 && (
         <div>
-          <h2 className="mb-3 text-xl font-semibold">Mayores ahorros potenciales</h2>
+          <h2 className="mb-3 text-xl font-semibold">
+            Mayores ahorros potenciales
+          </h2>
           <div className="rounded-xl ring-1 ring-foreground/10">
             <Table>
               <TableHeader>
@@ -647,25 +799,32 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(showAllSavings ? visibleSavings : visibleSavings.slice(0, 10)).map((p) => (
+                {(showAllSavings
+                  ? visibleSavings
+                  : visibleSavings.slice(0, 10)
+                ).map((p) => (
                   <TableRow
                     key={p.name}
                     className={isBelowThreshold(p) ? "opacity-20" : ""}
                   >
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell className="text-right">
-                      <span className="tabular-nums inline-block rounded px-1 py-0.5 bg-green-100 font-semibold text-green-800 dark:bg-green-900/60 dark:text-green-300">
+                      <span className="inline-block rounded bg-green-100 px-1 py-0.5 font-semibold text-green-800 tabular-nums dark:bg-green-900/60 dark:text-green-300">
                         {p.cheapestSms.join(", ")} — {fmt.format(p.min)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <span className="tabular-nums inline-block rounded px-1 py-0.5 bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300">
+                      <span className="inline-block rounded bg-red-100 px-1 py-0.5 text-red-800 tabular-nums dark:bg-red-900/60 dark:text-red-300">
                         {p.mostExpSms.join(", ")} — {fmt.format(p.max)}
                       </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
-                      <span className="font-semibold">{fmt.format(p.saving)}</span>
-                      <span className="ml-1 text-xs text-muted-foreground">({p.savingPct.toFixed(0)}%)</span>
+                      <span className="font-semibold">
+                        {fmt.format(p.saving)}
+                      </span>
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        ({p.savingPct.toFixed(0)}%)
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -677,7 +836,9 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
               onClick={() => setShowAllSavings((v) => !v)}
               className="mt-2 text-xs text-muted-foreground hover:text-foreground"
             >
-              {showAllSavings ? "Ver menos" : `Ver todos (${visibleSavings.length} productos)`}
+              {showAllSavings
+                ? "Ver menos"
+                : `Ver todos (${visibleSavings.length} productos)`}
             </button>
           )}
         </div>
@@ -687,131 +848,191 @@ export function PriceComparison({ analysis, costPerVisit = 0, routeOptimizerSlot
       {checkedProducts.size > 0 && routeOptimizerSlot}
 
       {/* Shopping List */}
-      {checkedProducts.size > 0 && (
-        <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between gap-2 flex-wrap">
-              <span>🛒 Lista de la compra ({checkedProducts.size} productos)</span>
-              <div className="flex items-center gap-1">
-                <Button variant="ghost" size="sm" onClick={downloadShoppingList} className="gap-1.5">
-                  <DownloadSimple size={14} />
-                  Exportar
-                </Button>
-                <Button variant="ghost" size="sm" onClick={copyShareLink} className="gap-1.5">
-                  <LinkSimple size={14} />
-                  {linkCopied ? "¡Copiado!" : "Compartir"}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setCheckedProducts(new Set())}>
-                  Limpiar
-                </Button>
+            <CardTitle className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                🛒 Lista de la compra
+                {checkedProducts.size > 0 && (
+                  <span className="ml-1.5 text-base font-normal text-muted-foreground">
+                    ({checkedProducts.size} {checkedProducts.size === 1 ? "producto" : "productos"})
+                  </span>
+                )}
+              </span>
+              {checkedProducts.size > 0 && (
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={downloadShoppingList}
+                    className="gap-1.5"
+                  >
+                    <DownloadSimple size={14} />
+                    Exportar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={copyShareLink}
+                    className="gap-1.5"
+                  >
+                    <LinkSimple size={14} />
+                    {linkCopied ? "¡Copiado!" : "Compartir"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCheckedProducts(new Set())}
+                  >
+                    Limpiar
+                  </Button>
+                </div>
+              )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {checkedProducts.size === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-center text-muted-foreground">
+                  <span className="text-3xl">☝️</span>
+                  <p className="text-sm font-medium">Selecciona productos en la tabla de arriba</p>
+                  <p className="text-xs">Haz clic en cualquier fila para añadirla a tu lista de la compra</p>
+                </div>
+              ) : (
+              <>
+              {/* Supermarket filter pills */}
+              <div className="flex flex-wrap gap-2">
+                <span className="self-center text-sm text-muted-foreground">
+                  Tiendas:
+                </span>
+                {supermarkets.map((sm) => (
+                  <button
+                    key={sm}
+                    onClick={() => toggleSupermarket(sm)}
+                    className={[
+                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      activeSupermarkets.has(sm)
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:bg-muted",
+                    ].join(" ")}
+                  >
+                    {sm}
+                  </button>
+                ))}
               </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            {/* Supermarket filter pills */}
-            <div className="flex flex-wrap gap-2">
-              <span className="self-center text-sm text-muted-foreground">Tiendas:</span>
-              {supermarkets.map((sm) => (
-                <button
-                  key={sm}
-                  onClick={() => toggleSupermarket(sm)}
-                  className={[
-                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                    activeSupermarkets.has(sm)
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:bg-muted",
-                  ].join(" ")}
-                >
-                  {sm}
-                </button>
-              ))}
-            </div>
 
-            {/* Shopping list grouped by supermarket */}
-            <div className="rounded-lg ring-1 ring-foreground/10 divide-y divide-border overflow-hidden">
-              {shoppingBySm.entries.map(({ sm, items }) => {
-                const smTotal = items.reduce((s, i) => s + i.price, 0)
-                return (
-                  <div key={sm}>
-                    <div className="bg-muted/40 px-4 py-2">
-                      <span className="text-sm font-semibold">{sm}</span>
-                    </div>
-                    <div className="px-4 py-2 flex flex-col gap-1">
-                      {items.map((item) => (
-                        <div key={item.name} className="flex items-baseline justify-between gap-4 text-sm">
-                          <span>
-                            {item.name}
-                            {item.unit && (
-                              <span className="ml-1 text-xs text-muted-foreground">({item.unit})</span>
-                            )}
+              {/* Shopping list grouped by supermarket */}
+              <div className="divide-y divide-border overflow-hidden rounded-lg ring-1 ring-foreground/10">
+                {shoppingBySm.entries.map(({ sm, items }) => {
+                  const smTotal = items.reduce((s, i) => s + i.price, 0)
+                  return (
+                    <div key={sm}>
+                      <div className="bg-muted/40 px-4 py-2">
+                        <span className="text-sm font-semibold">{sm}</span>
+                      </div>
+                      <div className="flex flex-col gap-1 px-4 py-2">
+                        {items.map((item) => (
+                          <div
+                            key={item.name}
+                            className="flex items-baseline justify-between gap-4 text-sm"
+                          >
+                            <span>
+                              {item.name}
+                              {item.unit && (
+                                <span className="ml-1 text-xs text-muted-foreground">
+                                  ({item.unit})
+                                </span>
+                              )}
+                            </span>
+                            <span className="shrink-0 tabular-nums">
+                              {fmt.format(item.price)}
+                            </span>
+                          </div>
+                        ))}
+                        <div className="mt-0.5 flex items-baseline justify-between gap-4 border-t border-border pt-1 text-sm">
+                          <span className="text-muted-foreground">
+                            Subtotal
                           </span>
-                          <span className="tabular-nums shrink-0">{fmt.format(item.price)}</span>
+                          <span className="shrink-0 font-medium tabular-nums">
+                            {fmt.format(smTotal)}
+                          </span>
                         </div>
-                      ))}
-                      <div className="flex items-baseline justify-between gap-4 border-t border-border pt-1 mt-0.5 text-sm">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span className="tabular-nums font-medium shrink-0">{fmt.format(smTotal)}</span>
                       </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
 
-              {shoppingBySm.unavailable.length > 0 && (
-                <div>
-                  <div className="bg-muted/40 px-4 py-2">
-                    <span className="text-sm font-semibold text-muted-foreground">No disponible en tiendas seleccionadas</span>
+                {shoppingBySm.unavailable.length > 0 && (
+                  <div>
+                    <div className="bg-muted/40 px-4 py-2">
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        No disponible en tiendas seleccionadas
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 px-4 py-2">
+                      {shoppingBySm.unavailable.map((name) => (
+                        <p key={name} className="text-sm text-muted-foreground">
+                          {name}
+                        </p>
+                      ))}
+                    </div>
                   </div>
-                  <div className="px-4 py-2 flex flex-col gap-1">
-                    {shoppingBySm.unavailable.map((name) => (
-                      <p key={name} className="text-sm text-muted-foreground">{name}</p>
-                    ))}
-                  </div>
-                </div>
-              )}
+                )}
 
-              {costPerVisit > 0 && shoppingBySm.entries.length > 0 && (
-                <div className="flex items-baseline justify-between gap-4 px-4 py-2 text-sm text-muted-foreground">
-                  <span>
-                    Viaje ({shoppingBySm.entries.length}{" "}
-                    {shoppingBySm.entries.length === 1 ? "tienda" : "tiendas"} × {fmt.format(costPerVisit)})
-                  </span>
-                  <span className="tabular-nums shrink-0">
-                    {fmt.format(shoppingBySm.entries.length * costPerVisit)}
+                {costPerVisit > 0 && shoppingBySm.entries.length > 0 && (
+                  <div className="flex items-baseline justify-between gap-4 px-4 py-2 text-sm text-muted-foreground">
+                    <span>
+                      Viaje ({shoppingBySm.entries.length}{" "}
+                      {shoppingBySm.entries.length === 1 ? "tienda" : "tiendas"}{" "}
+                      × {fmt.format(costPerVisit)})
+                    </span>
+                    <span className="shrink-0 tabular-nums">
+                      {fmt.format(shoppingBySm.entries.length * costPerVisit)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex items-baseline justify-between gap-4 px-4 py-3 text-sm font-semibold">
+                  <span>Total{costPerVisit > 0 ? " (con viaje)" : ""}</span>
+                  <span className="tabular-nums">
+                    {fmt.format(
+                      shoppingTotal +
+                        (costPerVisit > 0
+                          ? shoppingBySm.entries.length * costPerVisit
+                          : 0)
+                    )}
                   </span>
                 </div>
-              )}
-              <div className="flex items-baseline justify-between gap-4 px-4 py-3 text-sm font-semibold">
-                <span>Total{costPerVisit > 0 ? " (con viaje)" : ""}</span>
-                <span className="tabular-nums">
-                  {fmt.format(shoppingTotal + (costPerVisit > 0 ? shoppingBySm.entries.length * costPerVisit : 0))}
-                </span>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {(() => {
-          if (!singleBestForList) return null
-          const travelCost = costPerVisit > 0 ? shoppingBySm.entries.length * costPerVisit : 0
-          const optimalTotal = shoppingTotal + travelCost
-          const savings = singleBestForList.total - optimalTotal
-          if (savings <= 0.01) return null
-          return (
-            <p className="text-sm px-1">
-              Ahorras{" "}
-              <span className="font-bold text-primary">{fmt.format(savings)}</span>{" "}
-              vs comprar todo en{" "}
-              <span className="font-medium">{singleBestForList.sm}</span>
-              {costPerVisit > 0 && (
-                <span className="text-muted-foreground"> (viaje incluido)</span>
+              </>
               )}
-            </p>
-          )
-        })()}
+            </CardContent>
+          </Card>
+
+          {checkedProducts.size > 0 && (() => {
+            if (!singleBestForList) return null
+            const travelCost =
+              costPerVisit > 0 ? shoppingBySm.entries.length * costPerVisit : 0
+            const optimalTotal = shoppingTotal + travelCost
+            const savings = singleBestForList.total - optimalTotal
+            if (savings <= 0.01) return null
+            return (
+              <p className="px-1 text-sm">
+                Ahorras{" "}
+                <span className="font-bold text-primary">
+                  {fmt.format(savings)}
+                </span>{" "}
+                vs comprar todo en{" "}
+                <span className="font-medium">{singleBestForList.sm}</span>
+                {costPerVisit > 0 && (
+                  <span className="text-muted-foreground">
+                    {" "}
+                    (viaje incluido)
+                  </span>
+                )}
+              </p>
+            )
+          })()}
         </div>
-      )}
     </div>
   )
 }

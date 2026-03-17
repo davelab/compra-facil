@@ -1,7 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { PersonSimpleWalk, Bicycle, Bus, Motorcycle, Car } from "@phosphor-icons/react"
+import {
+  PersonSimpleWalk,
+  Bicycle,
+  Bus,
+  Motorcycle,
+  Car,
+} from "@phosphor-icons/react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
@@ -9,17 +15,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import type { Analysis } from "@/lib/parse-csv"
 
-const fmt = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" })
+const fmt = new Intl.NumberFormat("es-ES", {
+  style: "currency",
+  currency: "EUR",
+})
 
 const MODES = [
-  { id: "walk", label: "Andando",  Icon: PersonSimpleWalk, defaultCost: 0    },
-  { id: "bike", label: "Bicicleta", Icon: Bicycle,          defaultCost: 0    },
-  { id: "bus",  label: "Bus",       Icon: Bus,               defaultCost: 1.55 },
-  { id: "moto", label: "Moto",      Icon: Motorcycle,        defaultCost: 0.70 },
-  { id: "car",  label: "Coche",     Icon: Car,               defaultCost: 1.80 },
+  { id: "walk", label: "Andando", Icon: PersonSimpleWalk, defaultCost: 0 },
+  { id: "bike", label: "Bicicleta", Icon: Bicycle, defaultCost: 0 },
+  { id: "bus", label: "Bus", Icon: Bus, defaultCost: 1.55 },
+  { id: "moto", label: "Moto", Icon: Motorcycle, defaultCost: 0.7 },
+  { id: "car", label: "Coche", Icon: Car, defaultCost: 1.8 },
 ] as const
 
-type ModeId = typeof MODES[number]["id"]
+type ModeId = (typeof MODES)[number]["id"]
 
 interface RouteOptimizerProps {
   analysis: Analysis
@@ -27,7 +36,11 @@ interface RouteOptimizerProps {
   onCostChange: (v: number) => void
 }
 
-export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOptimizerProps) {
+export function RouteOptimizer({
+  analysis,
+  costPerVisit,
+  onCostChange,
+}: RouteOptimizerProps) {
   const { productStats, supermarkets, optimalTotal, cheapestWins } = analysis
 
   const [modeId, setModeId] = useState<ModeId>("car")
@@ -39,7 +52,9 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
   }
 
   // Number of stores used in the pure optimal basket
-  const pureOptimalStoreCount = supermarkets.filter((sm) => (cheapestWins[sm] ?? 0) > 0).length
+  const pureOptimalStoreCount = supermarkets.filter(
+    (sm) => (cheapestWins[sm] ?? 0) > 0
+  ).length
 
   const results = useMemo(() => {
     const n = supermarkets.length
@@ -50,7 +65,7 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
     let bestBasketCost = 0
     let bestTravelCost = 0
 
-    for (let mask = 1; mask < (1 << n); mask++) {
+    for (let mask = 1; mask < 1 << n; mask++) {
       const stores = supermarkets.filter((_, i) => (mask >> i) & 1)
 
       let basketCost = 0
@@ -87,7 +102,8 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
     const bestSingle = singleOptions[0]
 
     const savingsVsSingle = bestSingle.total - bestTotal
-    const savingsVsPureOptimal = bestTotal - (optimalTotal + pureOptimalStoreCount * costPerVisit)
+    const savingsVsPureOptimal =
+      bestTotal - (optimalTotal + pureOptimalStoreCount * costPerVisit)
 
     return {
       optimal: {
@@ -100,7 +116,13 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
       savingsVsSingle,
       savingsVsPureOptimal,
     }
-  }, [productStats, supermarkets, costPerVisit, optimalTotal, pureOptimalStoreCount])
+  }, [
+    productStats,
+    supermarkets,
+    costPerVisit,
+    optimalTotal,
+    pureOptimalStoreCount,
+  ])
 
   const pureTotal = optimalTotal + pureOptimalStoreCount * costPerVisit
   const routeIsSingleStore = results.optimal.stores.length === 1
@@ -114,7 +136,6 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-
         {/* Transport mode + cost */}
         <div className="flex flex-wrap items-center gap-3">
           <ButtonGroup>
@@ -134,15 +155,21 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
           </ButtonGroup>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-sm text-muted-foreground whitespace-nowrap">Coste por visita:</span>
+            <span className="text-sm whitespace-nowrap text-muted-foreground">
+              Coste por visita:
+            </span>
             <div className="relative">
-              <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">€</span>
+              <span className="absolute top-1/2 left-2.5 -translate-y-1/2 text-xs text-muted-foreground">
+                €
+              </span>
               <Input
                 type="number"
                 min={0}
                 step={0.05}
                 value={costPerVisit}
-                onChange={(e) => onCostChange(Math.max(0, parseFloat(e.target.value) || 0))}
+                onChange={(e) =>
+                  onCostChange(Math.max(0, parseFloat(e.target.value) || 0))
+                }
                 className="w-20 pl-6"
               />
             </div>
@@ -150,28 +177,34 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
         </div>
 
         {/* Comparison table */}
-        <div className="rounded-lg ring-1 ring-foreground/10 overflow-hidden text-sm">
+        <div className="overflow-hidden rounded-lg text-sm ring-1 ring-foreground/10">
           <table className="w-full">
             <thead>
               <tr className="bg-muted/40">
-                <th className="text-left px-4 py-2 font-medium">Escenario</th>
-                <th className="text-right px-4 py-2 font-medium">Tiendas</th>
-                <th className="text-right px-4 py-2 font-medium">Cesta</th>
-                <th className="text-right px-4 py-2 font-medium">Viaje</th>
-                <th className="text-right px-4 py-2 font-medium">Total</th>
+                <th className="px-4 py-2 text-left font-medium">Escenario</th>
+                <th className="px-4 py-2 text-right font-medium">Tiendas</th>
+                <th className="px-4 py-2 text-right font-medium">Cesta</th>
+                <th className="px-4 py-2 text-right font-medium">Viaje</th>
+                <th className="px-4 py-2 text-right font-medium">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {/* Pure optimal row */}
               <tr className="text-muted-foreground">
                 <td className="px-4 py-2">
-                  Cesta óptima{" "}
+                  Compra Facil{" "}
                   <span className="text-xs">(sin coste de viaje)</span>
                 </td>
-                <td className="text-right px-4 py-2 tabular-nums">{pureOptimalStoreCount}</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(optimalTotal)}</td>
-                <td className="text-right px-4 py-2 tabular-nums">—</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(optimalTotal)}</td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {pureOptimalStoreCount}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(optimalTotal)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">—</td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(optimalTotal)}
+                </td>
               </tr>
 
               {/* Route-optimal row */}
@@ -180,16 +213,22 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
                   <span className="font-semibold">Ruta óptima</span>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {results.optimal.stores.map((sm) => (
-                      <Badge key={sm} variant="outline" className="text-xs">{sm}</Badge>
+                      <Badge key={sm} variant="outline" className="text-xs">
+                        {sm}
+                      </Badge>
                     ))}
                   </div>
                 </td>
-                <td className="text-right px-4 py-2 tabular-nums font-semibold">
+                <td className="px-4 py-2 text-right font-semibold tabular-nums">
                   {results.optimal.stores.length}
                 </td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(results.optimal.basketCost)}</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(results.optimal.travelCost)}</td>
-                <td className="text-right px-4 py-2 tabular-nums font-bold text-primary">
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(results.optimal.basketCost)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(results.optimal.travelCost)}
+                </td>
+                <td className="px-4 py-2 text-right font-bold text-primary tabular-nums">
                   {fmt.format(results.optimal.total)}
                 </td>
               </tr>
@@ -198,12 +237,20 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
               <tr className="text-muted-foreground">
                 <td className="px-4 py-2">
                   Mejor tienda única{" "}
-                  <Badge variant="outline" className="ml-1 text-xs">{results.single.sm}</Badge>
+                  <Badge variant="outline" className="ml-1 text-xs">
+                    {results.single.sm}
+                  </Badge>
                 </td>
-                <td className="text-right px-4 py-2 tabular-nums">1</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(results.single.basketCost)}</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(costPerVisit)}</td>
-                <td className="text-right px-4 py-2 tabular-nums">{fmt.format(results.single.total)}</td>
+                <td className="px-4 py-2 text-right tabular-nums">1</td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(results.single.basketCost)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(costPerVisit)}
+                </td>
+                <td className="px-4 py-2 text-right tabular-nums">
+                  {fmt.format(results.single.total)}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -213,27 +260,35 @@ export function RouteOptimizer({ analysis, costPerVisit, onCostChange }: RouteOp
         {routeIsSingleStore ? (
           <p className="text-sm text-muted-foreground">
             Con este coste de desplazamiento, comprar todo en{" "}
-            <span className="font-medium text-foreground">{results.optimal.stores[0]}</span> es la
-            opción más económica — no vale la pena dividir la compra.
+            <span className="font-medium text-foreground">
+              {results.optimal.stores[0]}
+            </span>{" "}
+            es la opción más económica — no vale la pena dividir la compra.
           </p>
         ) : results.savingsVsSingle > 0.01 ? (
           <p className="text-sm">
             Siguiendo la ruta óptima ahorras{" "}
-            <span className="font-bold text-primary">{fmt.format(results.savingsVsSingle)}</span>{" "}
-            vs ir solo a <span className="font-medium">{results.single.sm}</span>
+            <span className="font-bold text-primary">
+              {fmt.format(results.savingsVsSingle)}
+            </span>{" "}
+            vs ir solo a{" "}
+            <span className="font-medium">{results.single.sm}</span>
             {results.savingsVsPureOptimal > 0.01 && (
               <span className="text-muted-foreground">
-                {" "}· pero{" "}
-                <span className="text-foreground font-medium">{fmt.format(results.savingsVsPureOptimal)}</span> más
-                caro que la cesta óptima sin contar el viaje
+                {" "}
+                · pero{" "}
+                <span className="font-medium text-foreground">
+                  {fmt.format(results.savingsVsPureOptimal)}
+                </span>{" "}
+                más caro que la Compra Facil sin contar el viaje
               </span>
             )}
             .
           </p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Con este coste de desplazamiento, la ruta óptima y la mejor tienda única tienen un coste
-            similar.
+            Con este coste de desplazamiento, la ruta óptima y la mejor tienda
+            única tienen un coste similar.
           </p>
         )}
       </CardContent>

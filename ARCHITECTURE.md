@@ -1,6 +1,6 @@
 # Scaled Architecture
 
-Design for scaling Cesta Óptima beyond a static CSV file — adding persistence,
+Design for scaling Compra Facil beyond a static CSV file — adding persistence,
 price history, user accounts, and a cloud DB while staying on free tiers.
 
 ---
@@ -19,6 +19,7 @@ public/data.csv
 ```
 
 **Limitations:**
+
 - Prices update only on redeploy
 - No price history (#3 blocked)
 - Shopping lists are ephemeral (URL param only)
@@ -118,6 +119,7 @@ next-app/
 ## Migration path (phased)
 
 ### Phase 1 — DB replaces CSV (no visible change)
+
 - Create Supabase project, run migrations
 - Import current `data.csv` as the first snapshot via seed script
 - Replace `fs.readFileSync` in `page.tsx` with `getLatestSnapshot()` from `lib/db/queries.ts`
@@ -125,18 +127,21 @@ next-app/
 - Redeploy = no longer needed to update prices; upload a new CSV instead
 
 ### Phase 2 — Price history (#3)
+
 - Add snapshot date selector in the header (server-rendered `<select>`)
 - Add `/history` page with trend charts (Recharts or shadcn Charts)
 - Add "Biggest movers" card: products with largest Δprice since previous snapshot
 - Add store inflation table: % price increase per store across snapshots
 
 ### Phase 3 — Persistent shopping lists
+
 - Add Supabase Auth (email magic link or Google OAuth)
 - Save/load shopping lists from `shopping_lists` + `shopping_list_items`
 - Keep URL-share as fallback for anonymous users
 - List names + created_at shown in a saved lists dropdown
 
 ### Phase 4 — Admin upload
+
 - Protected `/upload` route (Supabase RLS: only admin role)
 - Drag-and-drop CSV upload → stored in Supabase Storage
 - Server Action parses CSV, calls `upsertSnapshot()`, triggers revalidation
@@ -146,14 +151,14 @@ next-app/
 
 ## Key design decisions
 
-| Decision | Choice | Reason |
-|---|---|---|
-| DB | Supabase | Auth + Storage + Postgres in one free plan |
-| ORM | Drizzle | Lightweight, type-safe, no CLI runtime needed |
-| Analysis type | Keep unchanged | Zero component rewrites across phases |
-| Auth | Optional until Phase 3 | Avoids complexity before history is useful |
-| CSV parsing | Keep `parse-csv.ts` | Reused by both seed script and upload API |
-| Rendering | Server Components for data | Keeps client bundle small |
+| Decision      | Choice                     | Reason                                        |
+| ------------- | -------------------------- | --------------------------------------------- |
+| DB            | Supabase                   | Auth + Storage + Postgres in one free plan    |
+| ORM           | Drizzle                    | Lightweight, type-safe, no CLI runtime needed |
+| Analysis type | Keep unchanged             | Zero component rewrites across phases         |
+| Auth          | Optional until Phase 3     | Avoids complexity before history is useful    |
+| CSV parsing   | Keep `parse-csv.ts`        | Reused by both seed script and upload API     |
+| Rendering     | Server Components for data | Keeps client bundle small                     |
 
 ---
 
@@ -170,11 +175,11 @@ SUPABASE_SERVICE_ROLE_KEY=...          # Server-only (upload API, seed)
 
 ## Free tier capacity estimate
 
-| Resource | Used | Supabase free limit |
-|---|---|---|
-| DB storage | ~5 MB / 100 snapshots | 500 MB |
-| File storage (CSVs) | ~50 KB / upload | 1 GB |
-| Auth users | <100 | 50,000 |
-| API requests | Low traffic | Unlimited |
+| Resource            | Used                  | Supabase free limit |
+| ------------------- | --------------------- | ------------------- |
+| DB storage          | ~5 MB / 100 snapshots | 500 MB              |
+| File storage (CSVs) | ~50 KB / upload       | 1 GB                |
+| Auth users          | <100                  | 50,000              |
+| API requests        | Low traffic           | Unlimited           |
 
 Well within free tier for a personal or small-team tool.

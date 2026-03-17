@@ -26,7 +26,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", ibmPlexMono.variable, "font-serif", playfairDisplay.variable)}
     >
-      <body>
+      <body suppressHydrationWarning>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
